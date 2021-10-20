@@ -42,6 +42,7 @@
 #' @param NetwExtLinks boolean, If TRUE external hyperlinks (outlinks) also will be counted on Network edges and nodes.
 #' @param Vbrowser boolean, If TRUE the crawler will use web driver phantomsjs (virtual browser) to fetch and parse web pages instead of GET request
 #' @param LoggedSession A loggedin browser session object, created by \link{LoginSession} function
+#' @param MaxPages Define how many pages are allowed to be collected, zero is full site
 #' @return
 #'
 #' The crawling and scraping process may take a long time to finish, therefore, to avoid data loss in the case that a function crashes or stopped in the middle of action, some important data are exported at every iteration to R global environement:
@@ -271,7 +272,6 @@
 #' #3 create auhenticated session
 #' #  see \link{LoginSession} for more details
 #'
-#'  LS<-LoginSession(Browser = br, LoginURL = 'http://glofile.com/wp-login.php',
 #'                 LoginCredentials = c('demo','rc@pass@r'),
 #'                 cssLoginCredentials =c('#user_login', '#user_pass'),
 #'                 cssLoginButton='#wp-submit' )
@@ -323,7 +323,7 @@ Rcrawler <- function(Website, no_cores,no_conn, MaxDepth, DIR, RequestsDelay=0,O
                      ignoreUrlParams,ignoreAllUrlParams=FALSE, KeywordsFilter,KeywordsAccuracy,FUNPageFilter,
                      ExtractXpathPat, ExtractCSSPat, PatternsNames, ExcludeXpathPat, ExcludeCSSPat,
                      ExtractAsText=TRUE, ManyPerPattern=FALSE, saveOnDisk=TRUE, NetworkData=FALSE, NetwExtLinks=FALSE,
-                     statslinks=FALSE, Vbrowser=FALSE, LoggedSession) {
+                     statslinks=FALSE, Vbrowser=FALSE, LoggedSession, MaxPages=0) {
 
   if (missing(DIR)) DIR<-getwd()
   if (missing(KeywordsAccuracy)) KeywordsAccuracy<-1
@@ -332,6 +332,7 @@ Rcrawler <- function(Website, no_cores,no_conn, MaxDepth, DIR, RequestsDelay=0,O
   if (missing(no_cores)) no_cores<-parallel::detectCores()-1
   if (missing(no_conn)) no_conn<-no_cores
   if (missing(Obeyrobots)) Obeyrobots<-FALSE
+  if (missing(MaxPages)) MaxPages<-1000000
 
 
   if (missing(dataUrlfilter)){
@@ -554,7 +555,7 @@ Rcrawler <- function(Website, no_cores,no_conn, MaxDepth, DIR, RequestsDelay=0,O
   #tminsertion<<-vector()
   #tminsertionreq<<-vector()
   Iter<-0
-  while (t<=Listlength(Lshemav) && MaxDepth>=lev){
+  while (t<=Listlength(Lshemav) && MaxDepth>=lev && length(pkg.env$shema$Id) < MaxPages){
 
     Iter<-Iter+1
     # extraire les liens sur la page
@@ -937,7 +938,7 @@ Rcrawler <- function(Website, no_cores,no_conn, MaxDepth, DIR, RequestsDelay=0,O
       }
     #tminsertion<<-c(tminsertion,(proc.time() - ptm )[3])
     #tminsertionreq<<-c(tminsertionreq,format(Sys.time(), "%M,%S"))
-    cat("Progress:",format(round(((t/Listlength(Lshemav))*100), 2),nsmall = 2),"%  : ",t, " parssed from ",Listlength(Lshemav)," | Collected pages:",length(pkg.env$shema$Id)," | Level:",lev,"\n")
+    cat("Progress:",format(round(((t/Listlength(Lshemav))*100), 2),nsmall = 2),"%  : ",t, " parsed from ",Listlength(Lshemav)," | Collected pages:",length(pkg.env$shema$Id)," | Level:",lev,"\n")
     # t<-l+1
     t<-t+length(allpaquet)
     if(NetworkData){
